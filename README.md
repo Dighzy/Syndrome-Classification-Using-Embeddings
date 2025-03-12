@@ -2,6 +2,9 @@
 
 ## Project Overview
 
+<img src="data/images/syndrome_tsne.png" width="500px" />
+
+
 This project explores the use of K-Nearest Neighbors (KNN) classification to predict syndromes based on embeddings provided in the dataset. The primary focus was on handling challenges such as imbalanced data, outliers, and normalization of embeddings to achieve the best possible performance.
 
 ### Key Techniques Used:
@@ -36,6 +39,8 @@ This project explores the use of K-Nearest Neighbors (KNN) classification to pre
 ---
 
 ## Results & Analysis
+
+<img src="data/images/roc_comparision.png" width="500px" />
 
 - The best model was found using `k=15` and **Cosine** distance metric with the resampled dataset.
 - The **Cosine metric** outperformed the Euclidean metric in terms of F1-score and other metrics, especially with high-dimensional and non-linear data.

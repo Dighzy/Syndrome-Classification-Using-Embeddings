@@ -1,7 +1,7 @@
 from processing import PreProcessing
 import joblib
 import numpy as np
-from sklearn.metrics import roc_auc_score, f1_score, accuracy_score, top_k_accuracy_score, roc_curve, auc, classification_report
+from sklearn.metrics import accuracy_score, classification_report
 
 if __name__ == "__main__":
     preprocessor = PreProcessing()

@@ -49,14 +49,11 @@ class PreProcessing:
             mean = df[numeric_cols].mean().astype(np.float32)
             std = df[numeric_cols].std().astype(np.float32)
 
-            # Compute 1st and 99th percentiles
             p99 = np.percentile(df[numeric_cols], 99, axis=0).astype(np.float32)
             p1 = np.percentile(df[numeric_cols], 1, axis=0).astype(np.float32)
 
-            # Save these values for inference
             self.save_thresholds(p1, p99, mean, std)
         else:
-            # Load stored values during inference
             if self.thresholds is None:
                 raise ValueError("Thresholds not loaded. Train the model first.")
             p1 = self.thresholds['p1']
@@ -64,7 +61,7 @@ class PreProcessing:
             mean = self.thresholds['mean']
             std = self.thresholds['std']
 
-        # Normalize data using saved mean and std
+
         z_scores = (df[numeric_cols] - mean) / std
 
         # Replace outliers with stored percentiles

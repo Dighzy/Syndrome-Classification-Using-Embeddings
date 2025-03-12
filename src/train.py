@@ -1,6 +1,7 @@
 import numpy as np
 import joblib
-
+import pandas as pd
+import os
 
 from processing import PreProcessing
 from sklearn.preprocessing import label_binarize
@@ -139,6 +140,27 @@ class KNNClassifier:
         """
         Returns the evaluation results from cross-validation.
         """
+        return self.results
+    
+    def save_results_to_csv(self, model_name, filename="models/all_knn_results.csv", clear_file=False):
+        """
+        Saves the results of a trained model to a CSV file.
+        """
+        results_df = pd.DataFrame({
+            'Model Name': [model_name],
+            'k': [self.best_k],
+            'Distance Metric': self.distance_metric,
+            'AUC': self.results['auc_scores'][self.best_k_auc - self.k_range[0]],
+            'F1-Score': self.results['f1_scores'][self.best_k_auc - self.k_range[0]],
+            'Accuracy': self.results['accuracy_scores'][self.best_k_auc - self.k_range[0]],
+            'Top-K Accuracy': self.results['top_k_scores'][self.best_k_auc - self.k_range[0]]
+        })
+        if clear_file or not os.path.exists(filename):
+            results_df.to_csv(filename, index=False)
+        else:
+            results_df.to_csv(filename, mode='a', header=False, index=False)
+
+        print(f"Results for {model_name} saved to {filename}")
 
     def plot_roc_curve(self, y_bin, label, ax):
         y_pred_proba = self.final_model.predict_proba(self._X)
@@ -162,23 +184,45 @@ if __name__ == "__main__":
     # Optionally Oversampling to get better results in imbalanced syndromes
     smote = SMOTE(random_state=42)
     X_resampled, y_resampled = smote.fit_resample(X, y)
+    
 
-    knn_model_cos = KNNClassifier(X_resampled, y_resampled, k_range=(1, 15), distance_metric='cosine')
-    knn_model_cos.fit()
+    #Training the models
+    clear_file = True
 
-    # Optionally you can train with the Euclidean Metric
-    # Since we already saw that cosine is our best model we will continue with that for implementation
-    #knn_model_euc_smote = KNNClassifier(X_resampled, y_resampled, k_range=(1, 15), distance_metric='euclidean')
-    #knn_model_euc_smote.fit()
+    models = {
+        "knn_model_cos_resampled": KNNClassifier(X_resampled, y_resampled, (1, 15), "cosine"),
+        "knn_model_cos": KNNClassifier(X, y, (1, 15), "cosine"),
+        "knn_model_euc_resampled": KNNClassifier(X_resampled, y_resampled, (1, 15), "euclidean"),
+        "knn_model_euc": KNNClassifier(X, y, (1, 15), "euclidean")
+    }
 
-    # Generate predictions and display classification
+    for name, model in models.items():
+        model.fit()
+        model.save_results_to_csv(name, clear_file=clear_file)
+        clear_file = False  # Apenas o primeiro modelo limpa o arquivo
 
-    y_pred = np.argmax(knn_model_cos.predict_proba(), axis=1)  
+    results_file = "models/all_knn_results.csv"
+    if not os.path.exists(results_file):
+        print("Error: No results found.")
+        exit()
 
-    y_bin = label_binarize(y_resampled, classes=range(10))  
-    print('\nMetric : Cosine\n',classification_report(y_resampled, y_pred))
+    df_results = pd.read_csv(results_file)
 
-    joblib.dump(knn_model_cos.final_model, 'models/knn_model.pkl')
+    print(f'Models Results:\n {df_results}')
+
+    # choosing the best model
+    best_model_row = df_results.loc[df_results['AUC'].idxmax()]
+    best_model_name = best_model_row['Model Name']
+    best_k = best_model_row['k']
+    best_auc = best_model_row['AUC']
+    best_distance = best_model_row['Distance Metric']
+
+    print(f"\nBest Model: {best_model_name} | k={best_k} | AUC={best_auc:.4f} | Distance: {best_distance}")
+
+    # Saving the best model
+    best_model = models[best_model_name]
+    joblib.dump(best_model.final_model, "models/best_knn_model.pkl")
+    print(f"\nModel salve in: models/best_knn_model.pkl")
 
 
 
